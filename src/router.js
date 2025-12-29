@@ -1,53 +1,55 @@
-(function() {
+// src/router.js
+export default function initRouter() {
   const container = document.getElementById("mainContent");
-  const navLinks = document.querySelectorAll(".nav-link");
+  const links = document.querySelectorAll(".nav-link");
 
-  function setActiveLink(page) {
-    navLinks.forEach(link => {
-      const hrefPage = link.getAttribute("href").slice(1);
-      link.classList.remove("active"); // Remove 'active' from all links first
-      if (hrefPage === page) {
-        link.classList.add("active"); // Add 'active' to the matching link
-      }
+  if (!container) {
+    console.error("Router: #mainContent missing");
+    return;
+  }
+
+  function setActive(page) {
+    links.forEach(link => {
+      link.classList.toggle("active", link.dataset.page === page);
     });
   }
 
-  async function loadPage() {
-    if (!container) {
-      console.error("#mainContent not found");
-      return;
-    }
-
-    const page = window.location.hash.slice(1) || "home";
-    setActiveLink(page);
+  async function render(page) {
+    setActive(page);
 
     try {
       const module = await import(`./pages/${page}.js`);
-
-      // Prioritize module.default, then try init or render
-      let handler = module.default;
-      if (!handler) {
-        handler = module.init;
-      } else if (!handler) {
-        handler = module.render;
-      }
-
-      if (typeof handler !== "function") {
-        throw new Error(`No render function (default, init, or render) found in ${page}.js`);
-      }
-
       container.innerHTML = "";
-      handler(container);
-
-    } catch (err) {
+      module.default(container);
+    } catch {
       container.innerHTML = `
-        <h1 class="page-title">404</h1>
-        <p>Page "<strong>${window.location.hash.slice(1)}</strong>" not found.</p>
+        <h1>404</h1>
+        <p>Page "${page}" not found.</p>
       `;
-      console.error(err);
     }
   }
 
-  window.addEventListener("hashchange", loadPage);
-  document.addEventListener("DOMContentLoaded", loadPage);
-})();
+  function navigate(page) {
+    if (location.hash !== `#${page}`) {
+      location.hash = page;
+    } else {
+      render(page);
+    }
+  }
+
+  // click handling (router OWNS navigation)
+  links.forEach(link => {
+    link.addEventListener("click", () => {
+      navigate(link.dataset.page);
+    });
+  });
+
+  // hash handling (back/forward / direct URL)
+  window.addEventListener("hashchange", () => {
+    const page = location.hash.replace("#", "") || "home";
+    render(page);
+  });
+
+  // initial load
+  navigate(location.hash.replace("#", "") || "home");
+}
