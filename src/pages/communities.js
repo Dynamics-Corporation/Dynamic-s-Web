@@ -1,17 +1,27 @@
-// Link CSS
-const link = document.createElement("link");
-link.rel = "stylesheet";
-link.href = "src/utils/css/community.css";
-document.head.appendChild(link);
+// src/pages/communities.js
 
-// Mock session user data
+/* css loads once */
+if (!document.getElementById("community-css")) {
+  const link = document.createElement("link");
+  link.id = "community-css";
+  link.rel = "stylesheet";
+  link.href = "src/utils/css/community.css";
+  document.head.appendChild(link);
+}
+
+/* Mock auth + user state (safe placeholder) */
+
+const isAuthenticated = false; // 🔐 replace later with real auth
+
 const sessionUser = {
   id: "user_1",
   username: "You",
-  joinedCommunities: [] // will be fetched later
+  joinedCommunities: [] // { id, name }
 };
 
-const MAX_COMMUNITIES = 1000;
+const MAX_COMMUNITIES = 100;
+
+/* entry point */
 
 function initCommunities(container) {
   container.innerHTML = `
@@ -19,17 +29,26 @@ function initCommunities(container) {
 
       <!-- Sidebar -->
       <aside class="communities-sidebar">
-        <div class="sidebar-header">
-          <h2>Communities</h2>
-        </div>
+        <div class="sidebar-header">Communities</div>
 
         <div class="search-communities">
-          <input type="text" id="communitySearch" placeholder="Search My Communities">
+          <div style="position:relative">
+            <svg 
+              width="16" height="16" viewBox="0 0 24 24"
+              style="position:absolute; left:8px; top:50%; transform:translateY(-50%); opacity:.6"
+              fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+              id="communitySearch"
+              placeholder="Search communities"
+              style="padding-left:32px"
+            />
+          </div>
         </div>
 
-        <div class="communities-list" id="communityList">
-          <p class="empty-text">You haven't joined any communities.</p>
-        </div>
+        <div class="communities-list" id="communityList"></div>
 
         <button class="create-community-btn" id="createCommunityBtn">
           Create Community
@@ -40,129 +59,125 @@ function initCommunities(container) {
       <main class="community-content" id="communityContent">
         <div class="empty-state">
           <h2>Select a community</h2>
-          <p>Choose one from the left to view it</p>
+          <p>Choose one from the left to manage it</p>
         </div>
       </main>
 
     </div>
   `;
 
-  loadUserCommunities();
-  setupCommunityUI();
+  renderCommunityList();
+  setupUI();
 }
 
-/* data fetching (mock) */
+/* sidebar logic */
 
-function fetchUserCommunities() {
-  // replace with db call later
-  return sessionUser.joinedCommunities;
-}
-
-function fetchCommunityById(id) {
-  // replace with db call later
-  return {
-    id,
-    name: "Example Community",
-    creator: "SomeUser",
-    description: "Community description goes here.",
-    members: 42
-  };
-}
-
-/* sidebar view */
-
-function loadUserCommunities() {
+function renderCommunityList(filter = "") {
   const list = document.getElementById("communityList");
-  const communities = fetchUserCommunities();
-
   list.innerHTML = "";
 
+  let communities = sessionUser.joinedCommunities;
+
+  if (filter) {
+    communities = communities.filter(c =>
+      c.name.toLowerCase().includes(filter)
+    );
+  }
+
   if (communities.length === 0) {
-    list.innerHTML = `<p class="empty-text">You haven't joined any communities.</p>`;
+    list.innerHTML = `
+      <div class="empty">No joined communities</div>
+    `;
     return;
   }
 
   communities.slice(0, MAX_COMMUNITIES).forEach(c => {
-    const div = document.createElement("div");
-    div.className = "community-item";
-    div.textContent = c.name;
-    div.dataset.id = c.id;
-
-    div.onclick = () => loadCommunity(c.id);
-    list.appendChild(div);
+    const item = document.createElement("div");
+    item.className = "community-item";
+    item.textContent = c.name;
+    item.onclick = () => loadCommunity(c.id);
+    list.appendChild(item);
   });
 }
 
-/* main view */
-
+/* community view -> right panel */
 function loadCommunity(id) {
-  const data = fetchCommunityById(id);
-  const isMember = sessionUser.joinedCommunities.some(c => c.id === id);
+  const data = getCommunityById(id);
   const content = document.getElementById("communityContent");
 
   content.innerHTML = `
     <div class="community-header">
       <h1>${data.name}</h1>
-      <p>By ${data.creator}</p>
+      <button class="leave-btn" id="leaveBtn">Leave</button>
     </div>
 
-    <div class="community-actions">
-      ${
-        isMember
-          ? `<button class="leave-btn" id="leaveCommunityBtn">Leave Community</button>`
-          : `<button class="join-btn" id="joinCommunityBtn">Join Community</button>`
-      }
-    </div>
-
-    <section class="community-about">
-      <h2>About</h2>
+    <div class="community-section">
+      <h3>About</h3>
       <p>${data.description}</p>
-    </section>
+    </div>
+
+    <div class="community-section">
+      <h3>Controls</h3>
+      <p>You have full control over this community.</p>
+    </div>
   `;
 
-  if (isMember) {
-    document.getElementById("leaveCommunityBtn").onclick = () => {
-      sessionUser.joinedCommunities =
-        sessionUser.joinedCommunities.filter(c => c.id !== id);
-      loadUserCommunities();
-      loadCommunity(id);
-    };
-  } else {
-    document.getElementById("joinCommunityBtn").onclick = () => {
-      if (sessionUser.joinedCommunities.length >= MAX_COMMUNITIES) {
-        alert("Community limit reached (1000)");
-        return;
-      }
+  document.getElementById("leaveBtn").onclick = () => {
+    sessionUser.joinedCommunities =
+      sessionUser.joinedCommunities.filter(c => c.id !== id);
 
-      sessionUser.joinedCommunities.push({
-        id,
-        name: data.name
-      });
-
-      loadUserCommunities();
-      loadCommunity(id);
-    };
-  }
+    renderCommunityList();
+    content.innerHTML = `
+      <div class="empty-state">
+        <h2>Community left</h2>
+      </div>
+    `;
+  };
 }
 
 /* ui events */
 
-function setupCommunityUI() {
+function setupUI() {
   const search = document.getElementById("communitySearch");
+  const createBtn = document.getElementById("createCommunityBtn");
 
-  search.addEventListener("input", () => {
-    const query = search.value.toLowerCase();
-    document.querySelectorAll(".community-item").forEach(item => {
-      item.style.display =
-        item.textContent.toLowerCase().includes(query) ? "block" : "none";
-    });
+  search.addEventListener("input", e => {
+    renderCommunityList(e.target.value.toLowerCase());
   });
 
-  document.getElementById("createCommunityBtn").onclick = () => {
-    alert("Create Community UI comes later (after auth)");
+  createBtn.onclick = () => {
+    if (!isAuthenticated) {
+      alert("You must be signed in to create a community.");
+      return;
+    }
+
+    if (sessionUser.joinedCommunities.length >= MAX_COMMUNITIES) {
+      alert("Community limit reached (100).");
+      return;
+    }
+
+    // mock create
+    const id = crypto.randomUUID();
+    sessionUser.joinedCommunities.push({
+      id,
+      name: "New Community"
+    });
+
+    renderCommunityList();
   };
 }
 
-/* router hook */
+/* mock data helpers */
+function getCommunityById(id) {
+  return {
+    id,
+    name:
+      sessionUser.joinedCommunities.find(c => c.id === id)?.name ||
+      "Unknown Community",
+    description: "This is your community space."
+  };
+}
+
+/* router */
 window.initCommunities = initCommunities;
 export default initCommunities;
