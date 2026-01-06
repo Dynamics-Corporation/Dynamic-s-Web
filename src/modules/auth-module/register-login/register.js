@@ -27,27 +27,34 @@ export default function Register() {
     }
   }
 
+  const banner = window.authImageSrc ? React.createElement('img', { src: window.authImageSrc, alt: 'auth banner', style: { width: '80px', height: '80px', borderRadius: '50%', display: 'block', margin: '12px auto' } }) : React.createElement('div', { style: { width: '80px', height: '80px', borderRadius: '50%', background: '#f5eaff', margin: '12px auto' } });
+
   return React.createElement(
     'form',
-    { onSubmit: handleSubmit, style: { maxWidth: '400px', margin: '40px auto' } },
-    React.createElement('h2', null, 'Register'),
-    message && React.createElement('p', null, message),
+    { onSubmit: handleSubmit, style: { maxWidth: '420px', margin: '24px auto', padding: '16px' } },
+    banner,
+    React.createElement('h2', { style: { textAlign: 'center', marginBottom: '12px' } }, 'Create Account'),
+    React.createElement('p', { style: { textAlign: 'center', marginTop: 0, color: '#666' } }, 'Sign up to get started'),
+    message && React.createElement('p', { style: { color: '#0a0' } }, message),
     React.createElement('input', {
       placeholder: 'Username',
       value: username,
-      onChange: e => setUsername(e.target.value)
+      onChange: e => setUsername(e.target.value),
+      style: { width: '100%', padding: '10px', margin: '8px 0', borderRadius: '8px', border: '1px solid #ddd' }
     }),
     React.createElement('input', {
       placeholder: 'Email',
       value: email,
-      onChange: e => setEmail(e.target.value)
+      onChange: e => setEmail(e.target.value),
+      style: { width: '100%', padding: '10px', margin: '8px 0', borderRadius: '8px', border: '1px solid #ddd' }
     }),
     React.createElement('input', {
       type: 'password',
       placeholder: 'Password',
       value: password,
-      onChange: e => setPassword(e.target.value)
+      onChange: e => setPassword(e.target.value),
+      style: { width: '100%', padding: '10px', margin: '8px 0', borderRadius: '8px', border: '1px solid #ddd' }
     }),
-    React.createElement('button', { type: 'submit' }, 'Register')
+    React.createElement('button', { type: 'submit', style: { marginTop: '12px', width: '100%', padding: '12px', borderRadius: '10px', background: 'linear-gradient(90deg,#d946ef,#f472b6)', color: '#fff', border: 'none' } }, 'Sign Up')
   );
 }

@@ -13,6 +13,7 @@ function loadHomeCSS() {
 function initHome(container) {
   loadHomeCSS();
   container.innerHTML = `
+    <div id="userBanner" class="user-banner" style="margin-bottom:12px"></div>
     <h1 class="page-title">Home</h1>
 
     <!-- Friends Section -->
@@ -66,6 +67,23 @@ function initHome(container) {
     loadFavourites();
     setupEventListeners();
   }, 0);
+
+  function updateUserBanner() {
+    const banner = document.getElementById('userBanner');
+    if (!banner) return;
+    const user = window.SessionManager?.getUser() || null;
+    if (user) {
+      banner.innerHTML = `<div style="font-size:14px">Signed in as <strong>${user.username || user.email}</strong></div>`;
+    } else {
+      banner.innerHTML = `<div style="font-size:14px">Not signed in</div>`;
+    }
+  }
+
+  // update on session changes
+  updateUserBanner();
+  window.addEventListener('session:login', updateUserBanner);
+  window.addEventListener('session:logout', updateUserBanner);
+  window.addEventListener('session:update', updateUserBanner);
 }
 
 window.initHome = initHome;

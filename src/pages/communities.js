@@ -14,6 +14,7 @@ function initCommunities(container) {
   if (!container) return;
 
   container.innerHTML = `
+    <div id="userBanner" style="margin-bottom:12px"></div>
     <div class="communities-layout">
 
       <aside class="communities-sidebar">
@@ -34,6 +35,18 @@ function initCommunities(container) {
   setupEvents();
   renderSidebar();
   renderEmptyState();
+
+  function updateUserBanner() {
+    const banner = document.getElementById('userBanner');
+    if (!banner) return;
+    const user = window.SessionManager?.getUser() || null;
+    banner.innerHTML = user ? `Signed in as <strong>${user.username || user.email}</strong>` : 'Not signed in';
+  }
+
+  updateUserBanner();
+  window.addEventListener('session:login', updateUserBanner);
+  window.addEventListener('session:logout', updateUserBanner);
+  window.addEventListener('session:update', updateUserBanner);
 }
 
 function setupEvents() {

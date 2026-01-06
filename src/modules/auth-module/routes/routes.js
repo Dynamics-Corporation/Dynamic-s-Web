@@ -2,9 +2,9 @@
 
 import React from 'https://esm.sh/react@18.2.0';
 
-import Login from './register-login/login.js';
-import Register from './register-login/register.js';
-import { requireAuth } from './session.js';
+import Login from '../register-login/login.js';
+import Register from '../register-login/register.js';
+import { requireAuth } from '../session-manager/session.js';
 
 export default function Routes(props = {}) {
   const route = props.route || 'login';
